@@ -32,6 +32,11 @@ The overall architecture separates user flows into two highly distinct environme
 * **No-File Architecture**: Claims are evaluated instantly in the background without user submission.
 * **Trigger Validations**: Utilizes external APIs to cross-reference a worker's registered location against current meteorological anomalies and seismic databases.
 
+### Machine Learning Fraud Detection
+* **Pure JavaScript Neural Network Simulation**: Evaluates manual claim submissions using a hand-tuned weighted scoring model (sigmoid activation).
+* Assesses four dynamic parameters independently: Real-time API Weather Severity, Real-time API Earthquake Magnitude, Regional Claim Density (within 24 hours), and User Historical Fraud Scores.
+* Completely browser-compatible implementation with zero external dependencies (Node library `brain.js` replaced for native web execution).
+
 ### Dynamic Underwriting (Risk Model)
 * Implements a JavaScript heuristics engine assessing the provided physical address against historical geospatial metadata (Flood plains, cyclonic incidence, high-density traffic congestion lines, and static Indian Seismic Zones).
 * Dynamically calculates a 0-100 normalized risk score, modulating policy premiums and maximum capital payouts dynamically.

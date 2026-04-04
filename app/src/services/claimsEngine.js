@@ -1,11 +1,14 @@
 import { collection, getDocs, addDoc, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
-import { checkRainCondition } from './weatherService';
+import { checkRainCondition, checkAirCondition } from './weatherService';
 import { checkEarthquakeCondition } from './earthquakeService';
 
-export const runClaimsCheck = async () => {
+export const runClaimsCheck = async (region) => {
   try {
-    const snap = await getDocs(query(collection(db, 'policies'), where('status', '==', 'active')));
+    const q = region 
+      ? query(collection(db, 'policies'), where('status', '==', 'active'), where('region', '==', region))
+      : query(collection(db, 'policies'), where('status', '==', 'active'));
+    const snap = await getDocs(q);
     const policies = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     const results = [];
 
@@ -46,6 +49,21 @@ export const runClaimsCheck = async () => {
           processedAt: new Date().toISOString(),
         });
         results.push({ type: 'earthquake', workerId });
+      }
+
+      const aqiRes = await checkAirCondition(lat, lon);
+      if (aqiRes.triggered && !hasRecentClaim('aqi')) {
+        await addDoc(collection(db, 'claims'), {
+          workerId, policyId, type: 'auto',
+          triggerType: 'aqi',
+          triggerValue: aqiRes.aqi,
+          triggerDescription: `Unsafe Air Quality (${aqiRes.description}) - PM2.5: ${aqiRes.pm2_5}`,
+          amount: Math.round(maxPayout * 0.4),
+          status: 'approved',
+          eventDate: new Date().toISOString(),
+          processedAt: new Date().toISOString(),
+        });
+        results.push({ type: 'aqi', workerId });
       }
     }
     return results;

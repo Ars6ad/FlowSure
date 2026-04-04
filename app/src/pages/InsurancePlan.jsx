@@ -45,6 +45,7 @@ const InsurancePlan = () => {
         triggerThresholds: plan.triggerThresholds,
         lat: userProfile.lat, lon: userProfile.lon,
         city: userProfile.city, state: userProfile.state,
+        region: userProfile.state, // Regional area for admin-level filtering
         status: 'active', startDate: new Date().toISOString(),
       });
       await updateDoc(doc(db, 'workers', currentUser.uid), { hasPolicy: true, policyId: policyRef.id });

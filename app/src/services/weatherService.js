@@ -31,3 +31,23 @@ export const checkRainCondition = async (lat, lon) => {
     return { triggered: false, rainfall: 0, isFlood: false, city: 'Unknown', description: 'Unavailable', temperature: '--', humidity: '--' };
   }
 };
+
+export const checkAirCondition = async (lat, lon) => {
+  try {
+    const res = await fetch(`${BASE}/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`);
+    const data = await res.json();
+    const aqi = data.list?.[0]?.main?.aqi || 1;
+    const components = data.list?.[0]?.components || {};
+    return {
+      triggered: aqi >= 4,
+      aqi,
+      pm2_5: components.pm2_5 || 0,
+      pm10: components.pm10 || 0,
+      description: aqi === 1 ? 'Good' : aqi === 2 ? 'Fair' : aqi === 3 ? 'Moderate' : aqi === 4 ? 'Poor' : 'Very Poor'
+    };
+  } catch (e) {
+    console.error('AQI check failed:', e);
+    return { triggered: false, aqi: 1, description: 'Unavailable' };
+  }
+};
+

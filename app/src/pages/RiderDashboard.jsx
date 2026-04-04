@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
-import { checkRainCondition } from '../services/weatherService';
+import { checkRainCondition, checkAirCondition } from '../services/weatherService';
 import { checkEarthquakeCondition } from '../services/earthquakeService';
 
 const RiderDashboard = () => {
@@ -13,6 +13,7 @@ const RiderDashboard = () => {
   const [claims, setClaims] = useState([]);
   const [weather, setWeather] = useState(null);
   const [quake, setQuake] = useState(null);
+  const [aqi, setAqi] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,11 +26,12 @@ const RiderDashboard = () => {
       if (!pSnap.empty) setPolicy({ id: pSnap.docs[0].id, ...pSnap.docs[0].data() });
       setClaims(cSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate)).slice(0, 5));
       if (userProfile.lat && userProfile.lon) {
-        const [w, q] = await Promise.all([
+        const [w, q, a] = await Promise.all([
           checkRainCondition(userProfile.lat, userProfile.lon),
           checkEarthquakeCondition(userProfile.lat, userProfile.lon),
+          checkAirCondition(userProfile.lat, userProfile.lon),
         ]);
-        setWeather(w); setQuake(q);
+        setWeather(w); setQuake(q); setAqi(a);
       }
       setLoading(false);
     };
@@ -38,7 +40,13 @@ const RiderDashboard = () => {
 
   const handleLogout = async () => { await logout(); navigate('/'); };
 
-  const statusColor = { approved: 'text-green-700 bg-green-50', paid: 'text-green-700 bg-green-100', pending: 'text-amber-700 bg-amber-50', rejected: 'text-red-700 bg-red-50' };
+  const statusColor = { 
+    approved: 'text-green-700 bg-green-50', 
+    paid: 'text-green-700 bg-green-100', 
+    pending: 'text-amber-700 bg-amber-50', 
+    rejected: 'text-red-700 bg-red-50',
+    rejected_ml: 'text-red-800 bg-red-100'
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-surface flex items-center justify-center">
@@ -78,6 +86,25 @@ const RiderDashboard = () => {
               <div className="flex items-center gap-3"><span className="material-symbols-outlined text-amber-600">warning</span>
                 <p className="font-medium text-amber-800">You don't have an active insurance policy yet.</p></div>
               <button onClick={() => navigate('/insurance')} className="bg-amber-600 text-white px-5 py-2 rounded-xl font-bold hover:bg-amber-700 transition-all text-sm">Choose a Plan →</button>
+            </div>
+          )}
+
+          {userProfile?.accountStatus === 'suspended' && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-red-600 text-3xl">block</span>
+                <div>
+                  <p className="font-bold text-red-800">Account Suspended</p>
+                  <p className="text-sm text-red-700">Your manual claim access has been suspended due to persistent AI-flagged activity. Contact support to appeal.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {userProfile?.accountStatus === 'flagged' && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 flex items-center gap-3">
+              <span className="material-symbols-outlined text-amber-600">report_problem</span>
+              <p className="text-sm text-amber-800 font-medium">Your account is under review for irregular claim patterns. Further false claims may result in suspension.</p>
             </div>
           )}
 
@@ -140,6 +167,28 @@ const RiderDashboard = () => {
                   )}
                 </div>
               ) : <p className="text-sm text-on-surface-variant">Earthquake data unavailable.</p>}
+            </div>
+
+            {/* AQI Card */}
+            <div className="md:col-span-4 bg-white rounded-2xl p-6 border border-outline-variant/20 shadow-sm">
+              <h3 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4">Air Quality Index</h3>
+              {aqi ? (
+                <div>
+                   <div className="flex items-baseline gap-1 mb-1">
+                     <span className={`text-4xl font-black ${aqi.triggered ? 'text-red-600' : 'text-primary'}`}>AQI {aqi.aqi}</span>
+                   </div>
+                   <p className="text-sm text-on-surface-variant capitalize mb-4">{aqi.description}</p>
+                   <div className="grid grid-cols-2 gap-2">
+                     <div className="bg-surface-container-low rounded-xl p-3"><p className="text-xs text-on-surface-variant">PM2.5</p><p className="font-bold text-sm">{aqi.pm2_5} μg/m³</p></div>
+                     <div className="bg-surface-container-low rounded-xl p-3"><p className="text-xs text-on-surface-variant">PM10</p><p className="font-bold text-sm">{aqi.pm10} μg/m³</p></div>
+                   </div>
+                   {aqi.triggered && (
+                    <div className="mt-3 bg-red-50 text-red-700 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sm">mask</span>Unsafe air quality
+                    </div>
+                  )}
+                </div>
+              ) : <p className="text-sm text-on-surface-variant">AQI data unavailable.</p>}
             </div>
 
             {/* Recent Claims */}

@@ -9,6 +9,7 @@ const TABS = [
   { id: 'overview', label: 'Overview', icon: 'dashboard' },
   { id: 'workers', label: 'Workers', icon: 'group' },
   { id: 'claims', label: 'Claims Queue', icon: 'fact_check' },
+  { id: 'fraud', label: 'Risk & Fraud', icon: 'security' },
   { id: 'simulation', label: 'Simulation', icon: 'science' },
 ];
 
@@ -48,7 +49,7 @@ const AdminDashboard = () => {
   // Auto-run claims check on mount
   useEffect(() => {
     if (userProfile) {
-      runClaimsCheck().then(() => { setLastCheck(new Date()); loadData(); });
+      runClaimsCheck(userProfile.region).then(() => { setLastCheck(new Date()); loadData(); });
     }
   }, [userProfile]);
 
@@ -72,7 +73,7 @@ const AdminDashboard = () => {
   const runSim = async () => {
     setSimulating(true);
     await new Promise(r => setTimeout(r, 2000));
-    await runClaimsCheck();
+    await runClaimsCheck(userProfile.region);
     await loadData();
     setLastCheck(new Date());
     setSimulating(false);
@@ -171,8 +172,13 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${pol ? 'text-green-700 bg-green-50' : 'text-amber-700 bg-amber-50'}`}>{pol ? pol.planName : 'No Policy'}</span>
-                        <span className="text-xs text-on-surface-variant">{wClaims.length} claim{wClaims.length !== 1 ? 's' : ''}</span>
+                        <div className="flex gap-2">
+                          {w.accountStatus && w.accountStatus !== 'active' && (
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-tighter ${w.accountStatus === 'suspended' ? 'bg-red-600 text-white' : 'bg-amber-100 text-amber-800'}`}>{w.accountStatus}</span>
+                          )}
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full ${pol ? 'text-green-700 bg-green-50' : 'text-amber-700 bg-amber-50'}`}>{pol ? pol.planName : 'No Policy'}</span>
+                        </div>
+                        <span className="text-xs text-on-surface-variant text-right">{wClaims.length} claim{wClaims.length !== 1 ? 's' : ''} {w.fraudCount > 0 && <span className="text-red-500 ml-1">({w.fraudCount} AI-flagged)</span>}</span>
                         <button onClick={() => sendMissedClaim(w)} className="text-xs bg-primary-fixed text-primary px-3 py-1.5 rounded-lg font-bold hover:bg-primary-container hover:text-white transition-all">Send Missed Claim</button>
                       </div>
                     </div>
@@ -210,6 +216,20 @@ const AdminDashboard = () => {
                         <p className="font-bold">{worker?.fullName || 'Unknown Worker'} · {worker?.city}</p>
                         <p className="text-sm text-on-surface-variant capitalize">{c.triggerType?.replace('_',' ')} · {new Date(c.eventDate).toLocaleDateString('en-IN')}</p>
                         {c.triggerDescription && <p className="text-xs text-on-surface-variant mt-1">{c.triggerDescription}</p>}
+                        
+                        {c.mlAction && (
+                          <div className="mt-3 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                             <div className="flex items-center gap-2 mb-1">
+                               <span className={`w-2 h-2 rounded-full ${c.mlAction === 'approve' ? 'bg-green-500' : c.mlAction === 'reject' ? 'bg-red-500' : 'bg-amber-500'}`} />
+                               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">AI Risk Engine Confidence: {(c.mlConfidence * 100).toFixed(1)}%</span>
+                             </div>
+                             <div className="grid grid-cols-4 gap-2 text-[10px]">
+                               {Object.entries(c.mlMetrics || {}).map(([k, v]) => (
+                                 <div key={k} className="text-slate-400 capitalize">{k}: <strong>{v.toFixed(2)}</strong></div>
+                               ))}
+                             </div>
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-black text-primary">₹{c.amount?.toLocaleString()}</p>
@@ -225,6 +245,49 @@ const AdminDashboard = () => {
                 );
               })}
               {claims.length === 0 && <div className="text-center py-16 text-on-surface-variant"><span className="material-symbols-outlined text-5xl block mb-3">inbox</span>No claims in this region yet.</div>}
+            </div>
+          </div>
+        )}
+
+        {/* Risk & Fraud */}
+        {tab === 'fraud' && (
+          <div>
+            <h1 className="text-3xl font-extrabold text-on-surface font-headline mb-2">Risk & Fraud Management</h1>
+            <p className="text-on-surface-variant mb-6">Workers with persistent AI-flagged manual claims in <strong>{userProfile?.region}</strong>.</p>
+            
+            <div className="grid grid-cols-1 gap-4">
+              {workers.filter(w => (w.fraudCount > 0 || w.accountStatus === 'flagged' || w.accountStatus === 'suspended')).length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-2xl border border-outline-variant/20">
+                   <span className="material-symbols-outlined text-green-500 text-5xl mb-3">verified_user</span>
+                   <p className="font-bold">No fraudulent activity detected in your region.</p>
+                </div>
+              ) : (
+                workers.filter(w => (w.fraudCount > 0 || w.accountStatus === 'flagged' || w.accountStatus === 'suspended')).map(w => (
+                  <div key={w.id} className="bg-white rounded-2xl p-6 border border-outline-variant/20 shadow-sm flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-red-50 text-red-600 rounded-xl flex items-center justify-center font-bold text-lg">{w.fullName?.[0]}</div>
+                      <div>
+                        <p className="font-bold">{w.fullName} <span className={`text-[10px] ml-2 px-2 py-0.5 rounded-full ${w.accountStatus === 'suspended' ? 'bg-red-600 text-white' : 'bg-amber-100 text-amber-800'}`}>{w.accountStatus || 'At Risk'}</span></p>
+                        <p className="text-xs text-on-surface-variant">Persistent Fraud Count: <strong className="text-red-600">{w.fraudCount || 0}</strong></p>
+                        <p className="text-[10px] text-on-surface-variant">Last Manual Rejection: {w.lastFraudDate ? new Date(w.lastFraudDate).toLocaleDateString() : 'None'}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                       {w.accountStatus !== 'suspended' ? (
+                          <button onClick={async () => {
+                            await updateDoc(doc(db, 'workers', w.id), { accountStatus: 'suspended' });
+                            loadData();
+                          }} className="bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700 transition-all">Suspend Account</button>
+                       ) : (
+                          <button onClick={async () => {
+                             await updateDoc(doc(db, 'workers', w.id), { accountStatus: 'active', fraudCount: 0 });
+                             loadData();
+                          }} className="bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-green-700 transition-all">Reinstate & Clear Score</button>
+                       )}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}

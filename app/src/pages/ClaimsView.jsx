@@ -5,6 +5,8 @@ import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { checkRainCondition } from '../services/weatherService';
 import { checkEarthquakeCondition } from '../services/earthquakeService';
+import { evaluateManualClaim } from '../services/fraudMLService';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 
 const ClaimsView = () => {
   const navigate = useNavigate();
@@ -31,16 +33,53 @@ const ClaimsView = () => {
   }, [currentUser, submitted]);
 
   const handleManualClaim = async () => {
-    if (!manualDesc.trim() || !policy) return;
+    if (!manualDesc.trim() || !policy || !userProfile) return;
     setSubmitting(true);
-    await addDoc(collection(db, 'claims'), {
-      workerId: currentUser.uid, policyId: policy.id,
-      type: 'manual', triggerType: manualType,
+    
+    // 1. Run ML Evaluation
+    const mlResult = await evaluateManualClaim(
+      currentUser.uid, 
+      userProfile.lat, 
+      userProfile.lon, 
+      userProfile.state
+    );
+
+    const claimStatus = mlResult.action === 'reject' ? 'rejected_ml' : 'pending';
+    const claimData = {
+      workerId: currentUser.uid, 
+      policyId: policy.id,
+      type: 'manual', 
+      triggerType: manualType,
       triggerDescription: manualDesc,
       amount: Math.round(policy.maxPayout * 0.5),
-      status: 'pending', eventDate: new Date().toISOString(),
-    });
-    setSubmitting(false); setShowForm(false); setManualDesc(''); setSubmitted(s => !s);
+      status: claimStatus,
+      eventDate: new Date().toISOString(),
+      mlConfidence: mlResult.confidence,
+      mlAction: mlResult.action,
+      mlMetrics: mlResult.metrics
+    };
+
+    // 2. Add Claim
+    await addDoc(collection(db, 'claims'), claimData);
+
+    // 3. Handle persistent offenders
+    if (mlResult.action === 'reject') {
+      const workerRef = doc(db, 'workers', currentUser.uid);
+      await updateDoc(workerRef, {
+        fraudCount: increment(1),
+        lastFraudDate: new Date().toISOString()
+      });
+      
+      // Check if account should be flagged/suspended (e.g. > 3 rejections)
+      if ((userProfile.fraudCount || 0) + 1 >= 3) {
+        await updateDoc(workerRef, { accountStatus: 'flagged' });
+      }
+    }
+
+    setSubmitting(false); 
+    setShowForm(false); 
+    setManualDesc(''); 
+    setSubmitted(s => !s);
   };
 
   const statusConfig = {
@@ -48,6 +87,7 @@ const ClaimsView = () => {
     paid: { label: 'Paid', color: 'text-green-700 bg-green-100', icon: 'payments' },
     pending: { label: 'Pending Review', color: 'text-amber-700 bg-amber-50', icon: 'pending' },
     rejected: { label: 'Rejected', color: 'text-red-700 bg-red-50', icon: 'cancel' },
+    rejected_ml: { label: 'Flagged (AI)', color: 'text-red-800 bg-red-100', icon: 'security' },
   };
 
   const triggerIcon = { rain: 'water_drop', flood: 'waves', earthquake: 'landslide', manual: 'report', platform_outage: 'cloud_off', cyclone: 'cyclone', heatwave: 'thermostat' };
@@ -94,11 +134,16 @@ const ClaimsView = () => {
                 <textarea value={manualDesc} onChange={e => setManualDesc(e.target.value)} rows={3} placeholder="Briefly describe what happened and how it affected your work…" className="w-full border border-outline-variant rounded-xl px-4 py-3 bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none" />
               </div>
               <div className="flex gap-3">
-                <button onClick={handleManualClaim} disabled={submitting || !manualDesc.trim()} className="bg-primary-container text-white px-6 py-2.5 rounded-xl font-bold hover:bg-primary transition-all active:scale-95 disabled:opacity-60">
-                  {submitting ? 'Submitting…' : 'Submit Claim'}
+                <button 
+                  onClick={handleManualClaim} 
+                  disabled={submitting || !manualDesc.trim() || userProfile?.accountStatus === 'suspended'} 
+                  className={`px-6 py-2.5 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-60 ${userProfile?.accountStatus === 'suspended' ? 'bg-red-200 text-red-500 cursor-not-allowed' : 'bg-primary-container text-white hover:bg-primary'}`}
+                >
+                  {submitting ? 'Submitting…' : userProfile?.accountStatus === 'suspended' ? 'Submission Disabled' : 'Submit Claim'}
                 </button>
                 <button onClick={() => setShowForm(false)} className="border border-outline-variant px-6 py-2.5 rounded-xl font-bold text-on-surface-variant hover:border-primary transition-all">Cancel</button>
               </div>
+              {userProfile?.accountStatus === 'suspended' && <p className="text-sm text-red-600 font-bold">Your manual claim access has been suspended due to persistent fraud flags.</p>}
               <p className="text-xs text-on-surface-variant">Manual claims are reviewed by an admin. Auto-triggered claims are paid instantly.</p>
             </div>
           </div>
