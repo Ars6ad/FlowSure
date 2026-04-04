@@ -1,0 +1,6 @@
+@echo off
+cd /d "c:\Users\Dudekula arshad\OneDrive\Desktop\gig sheild\stitch\app"
+echo Running npm install...
+call npm install
+echo Running npm run dev...
+call npm run dev
