@@ -100,7 +100,7 @@ const ClaimsView = () => {
             <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors">
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
-            <span className="text-xl font-extrabold text-primary font-headline cursor-pointer" onClick={() => navigate('/')}>GigShield</span>
+            <span className="text-xl font-extrabold text-primary font-headline cursor-pointer" onClick={() => navigate('/')}>FlowSure</span>
           </div>
           <span className="text-sm font-medium text-on-surface-variant hidden sm:block">{userProfile?.fullName}</span>
         </div>

@@ -9,7 +9,7 @@ const LandingPage = () => {
       {/* TopAppBar */}
       <header className="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-[0_12px_32px_-4px_rgba(0,35,111,0.06)]">
         <div className="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
-          <div className="text-2xl font-bold tracking-tight text-blue-900 dark:text-white font-headline">GigShield</div>
+          <div className="text-2xl font-bold tracking-tight text-blue-900 dark:text-white font-headline">FlowSure</div>
           <nav className="hidden md:flex items-center gap-8">
             <a className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-600 dark:hover:text-blue-300 transition-colors" href="#">How it Works</a>
             <a className="text-slate-600 dark:text-slate-400 font-medium hover:text-blue-600 dark:hover:text-blue-300 transition-colors" href="#">Benefits</a>
@@ -78,7 +78,7 @@ const LandingPage = () => {
               <div className="bg-surface-container-lowest p-10 rounded-2xl ghost-shadow flex flex-col justify-between aspect-square">
                 <span className="material-symbols-outlined text-5xl text-on-secondary-container mb-8">shield_moon</span>
                 <h3 className="text-2xl font-bold text-on-surface mb-2">Zero Coverage</h3>
-                <p className="text-on-surface-variant font-medium">Traditional insurance ignores daily wage loss. GigShield was built specifically for this gap.</p>
+                <p className="text-on-surface-variant font-medium">Traditional insurance ignores daily wage loss. FlowSure was built specifically for this gap.</p>
               </div>
             </div>
           </div>

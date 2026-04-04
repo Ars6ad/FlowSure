@@ -18,7 +18,7 @@ const Navbar = ({ showUser = false }) => {
           className="text-2xl font-extrabold tracking-tight text-primary font-headline cursor-pointer select-none"
           onClick={() => navigate('/')}
         >
-          GigShield
+          FlowSure
         </span>
         {showUser && currentUser && (
           <div className="flex items-center gap-4">

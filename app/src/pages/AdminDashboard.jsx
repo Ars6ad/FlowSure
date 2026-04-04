@@ -94,7 +94,7 @@ const AdminDashboard = () => {
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-outline-variant/20 flex flex-col py-6 px-4 fixed h-full z-40 hidden md:flex">
         <div className="mb-8 px-2">
-          <h2 className="text-lg font-extrabold text-primary font-headline cursor-pointer" onClick={() => navigate('/')}>GigShield</h2>
+          <h2 className="text-lg font-extrabold text-primary font-headline cursor-pointer" onClick={() => navigate('/')}>FlowSure</h2>
           <p className="text-xs text-on-surface-variant mt-0.5">Admin · {userProfile?.organization}</p>
           <span className="inline-block mt-2 text-xs bg-primary-fixed text-primary font-bold px-2 py-1 rounded-full">{userProfile?.region}</span>
         </div>

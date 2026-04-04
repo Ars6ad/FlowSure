@@ -59,7 +59,7 @@ const RiderDashboard = () => {
       <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl shadow-[0_1px_0_0_rgba(0,35,111,0.08)]">
         <div className="flex items-center justify-between px-8 py-4 max-w-[1440px] mx-auto">
           <div className="flex items-center gap-8">
-            <span className="text-xl font-extrabold tracking-tight text-primary font-headline cursor-pointer" onClick={() => navigate('/')}>GigShield</span>
+            <span className="text-xl font-extrabold tracking-tight text-primary font-headline cursor-pointer" onClick={() => navigate('/')}>FlowSure</span>
             <nav className="hidden md:flex items-center gap-6">
               <span className="text-primary font-bold border-b-2 border-primary pb-0.5 text-sm">Dashboard</span>
               <button onClick={() => navigate('/claims')} className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors">Claims</button>

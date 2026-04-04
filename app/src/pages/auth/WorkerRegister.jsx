@@ -296,7 +296,7 @@ const WorkerRegister = () => {
                 ))}
                 <label className="flex items-start gap-3 cursor-pointer">
                   <input type="checkbox" checked={form.termsAccepted} onChange={e => up('termsAccepted', e.target.checked)} className="mt-1 w-4 h-4 accent-primary rounded" />
-                  <span className="text-sm text-on-surface-variant">I agree to GigShield's <span className="text-primary font-bold">Terms of Service</span> and <span className="text-primary font-bold">Privacy Policy</span>. I confirm all information provided is accurate.</span>
+                  <span className="text-sm text-on-surface-variant">I agree to FlowSure's <span className="text-primary font-bold">Terms of Service</span> and <span className="text-primary font-bold">Privacy Policy</span>. I confirm all information provided is accurate.</span>
                 </label>
               </div>
             )}

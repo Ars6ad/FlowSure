@@ -1,6 +1,6 @@
-# GigShield Platform
+# FlowSure Platform
 
-GigShield is a comprehensive, full-stack parametric insurance application designed to provide automated financial protection for gig economy workers against location-based disruptions, including adverse weather conditions and recent regional seismic activities.
+FlowSure is a comprehensive, full-stack parametric insurance application designed to provide automated financial protection for gig economy workers against location-based disruptions, including adverse weather conditions and recent regional seismic activities.
 
 ## Table of Contents
 1. [System Architecture](#system-architecture)
@@ -57,7 +57,7 @@ The overall architecture separates user flows into two highly distinct environme
 
 ## External Integrations
 
-GigShield interfaces with several third-party platforms to execute its core autonomous underwriting and validation mechanisms.
+FlowSure interfaces with several third-party platforms to execute its core autonomous underwriting and validation mechanisms.
 
 | Service Name | Description | Protocol | Cost Parameters |
 | :--- | :--- | :--- | :--- |
@@ -138,4 +138,4 @@ The platform organizes unstructured data into four primary Firestore collections
 | `claims` | The historical payout queue representing meteorological alerts, admin modifications, or worker requests. | Auto-generated UUID |
 
 ---
-*GigShield — Resilient Infrastructure for the Decentralized Workforce.*
+*FlowSure — Resilient Infrastructure for the Decentralized Workforce.*

@@ -57,7 +57,7 @@ const WorkerLogin = () => {
             </button>
           </form>
           <div className="mt-6 pt-6 border-t border-outline-variant/30 text-center space-y-2">
-            <p className="text-sm text-on-surface-variant">New to GigShield?{' '}
+            <p className="text-sm text-on-surface-variant">New to FlowSure?{' '}
               <button onClick={() => navigate('/worker/register')} className="text-primary font-bold hover:underline">Create account</button>
             </p>
             <p className="text-sm text-on-surface-variant">

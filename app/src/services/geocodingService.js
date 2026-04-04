@@ -4,7 +4,7 @@ export const reverseGeocode = async (lat, lon) => {
   try {
     const res = await fetch(
       `${NOMINATIM}/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
-      { headers: { 'Accept-Language': 'en', 'User-Agent': 'GigShield/1.0' } }
+      { headers: { 'Accept-Language': 'en', 'User-Agent': 'FlowSure/1.0' } }
     );
     const data = await res.json();
     const a = data.address || {};
